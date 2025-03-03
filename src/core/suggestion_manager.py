@@ -55,7 +55,7 @@ class SuggestionManager:
             file_time = os.path.getmtime(latest_file)
             current_time = time.time()
             if (current_time - file_time) > 60:  # 60 seconds = 1 minute
-                print(f"Most recent OCR file is too old ({int(current_time - file_time)} seconds)")
+                #p rint(f"Most recent OCR file is too old ({int(current_time - file_time)} seconds)")
                 return False
             
             self.last_file = latest_file

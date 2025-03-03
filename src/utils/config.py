@@ -2,6 +2,7 @@
 Configuration handling for the Screenshot OCR Tool
 """
 import configparser
+import logging
 import os
 from typing import Dict, Any
 
@@ -115,6 +116,22 @@ class Config:
         Returns:
             Dictionary of logging settings
         """
+        # Get log level from config
+        log_level_str = self.config.get("Logging", "log_level", fallback="INFO").upper()
+        
+        # Map string to logging level
+        log_level_map = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL
+        }
+        
+        # Default to INFO if invalid level specified
+        log_level = log_level_map.get(log_level_str, logging.INFO)
+        
         return {
             "debug": self.config.getboolean("Logging", "debug", fallback=False),
+            "log_level": log_level
         }

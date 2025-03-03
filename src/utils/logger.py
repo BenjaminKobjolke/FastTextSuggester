@@ -21,14 +21,17 @@ class Logger:
         """
         # Get logging settings
         self.config = config
-        debug_enabled = False
+        log_level = logging.INFO
         
         if config:
             logging_settings = config.get_logging_settings()
-            debug_enabled = logging_settings.get("debug", False)
-        
-        # Set log level based on debug setting
-        log_level = logging.DEBUG if debug_enabled else logging.INFO
+            
+            # Use log_level from settings if available
+            if "log_level" in logging_settings:
+                log_level = logging_settings["log_level"]
+            # Otherwise, fall back to debug setting
+            elif logging_settings.get("debug", False):
+                log_level = logging.DEBUG
         
         self.logger = logging.getLogger("ScreenshotOCR")
         self.logger.setLevel(log_level)

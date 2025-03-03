@@ -310,6 +310,13 @@ class SuggestionWindow:
     def _on_input_change(self, *args):
         """Handle input field changes."""
         text = self.input_var.get()
+        
+        # Check for special commands
+        if text == "/exit":
+            self.logger.info("Exit command detected, closing application")
+            self.exit_application()
+            return
+            
         if text:
             # Get suggestions
             self.suggestions = self.suggestion_manager.get_suggestions(text)
@@ -318,6 +325,25 @@ class SuggestionWindow:
             # Clear suggestions
             self.suggestions = []
             self._update_suggestions([])
+            
+    def exit_application(self):
+        """Exit the application cleanly."""
+        # Hide the window first
+        self.hide()
+        
+        # Schedule application exit after a short delay
+        if hasattr(self, 'root') and self.root:
+            self.root.after(100, self._perform_exit)
+        else:
+            self._perform_exit()
+            
+    def _perform_exit(self):
+        """Perform the actual exit."""
+        if self.logger:
+            self.logger.info("Exiting application via suggestion window command")
+        # Use os._exit to forcefully terminate the process
+        import os
+        os._exit(0)
 
     def _update_suggestions(self, suggestions: List[str]):
         """Update the suggestion listbox."""
