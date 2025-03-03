@@ -1,0 +1,4 @@
+pillow>=9.0.0
+pytesseract>=0.3.10
+keyboard>=0.13.5
+pywin32>=305
