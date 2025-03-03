@@ -12,16 +12,30 @@ class Logger:
     Handles logging to console and file.
     """
 
-    def __init__(self, log_level: int = logging.INFO, log_to_file: bool = True):
+    def __init__(self, config=None):
         """
         Initialize the logger.
 
         Args:
-            log_level: Logging level (default: INFO)
-            log_to_file: Whether to log to file (default: True)
+            config: Configuration object (optional)
         """
+        # Get logging settings
+        self.config = config
+        debug_enabled = False
+        
+        if config:
+            logging_settings = config.get_logging_settings()
+            debug_enabled = logging_settings.get("debug", False)
+        
+        # Set log level based on debug setting
+        log_level = logging.DEBUG if debug_enabled else logging.INFO
+        
         self.logger = logging.getLogger("ScreenshotOCR")
         self.logger.setLevel(log_level)
+        
+        # Clear any existing handlers
+        if self.logger.handlers:
+            self.logger.handlers.clear()
         
         # Create formatter
         formatter = logging.Formatter(
@@ -34,20 +48,19 @@ class Logger:
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
         
-        # Create file handler if enabled
-        if log_to_file:
-            log_dir = "logs"
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-                
-            log_file = os.path.join(
-                log_dir, 
-                f"screenshot_ocr_{datetime.now().strftime('%Y%m%d')}.log"
-            )
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(log_level)
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
+        # Create file handler
+        log_dir = "logs"
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+            
+        log_file = os.path.join(
+            log_dir, 
+            f"screenshot_ocr_{datetime.now().strftime('%Y%m%d')}.log"
+        )
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
 
     def info(self, message: str) -> None:
         """

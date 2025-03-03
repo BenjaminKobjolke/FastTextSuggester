@@ -262,20 +262,38 @@ class SuggestionWindow:
 
     def hide(self, event=None):
         """Hide the suggestion window."""
-        if self.window:
-            self.window.withdraw()
-            self.is_visible = False
+        if not self.window:
+            return
             
-            # Restore focus to the previous window
-            if self.last_active_window:
-                try:
-                    win32gui.SetForegroundWindow(self.last_active_window)
-                except Exception as e:
-                    if self.logger:
-                        self.logger.error(f"Error restoring focus: {e}")
+        # Set flag to indicate window should be hidden
+        self.is_visible = False
+        
+        # Schedule the actual hiding to happen in the main thread
+        if hasattr(self.window, 'after'):
+            self.window.after(0, self._hide_window)
+        else:
+            # Fallback if window doesn't have after method
+            self._hide_window()
             
+    def _hide_window(self):
+        """Internal method to hide the window in the main thread."""
+        try:
+            if self.window:
+                self.window.withdraw()
+                
+                # Restore focus to the previous window
+                if self.last_active_window:
+                    try:
+                        win32gui.SetForegroundWindow(self.last_active_window)
+                    except Exception as e:
+                        if self.logger:
+                            self.logger.error(f"Error restoring focus: {e}")
+                
+                if self.logger:
+                    self.logger.info("Suggestion window hidden")
+        except Exception as e:
             if self.logger:
-                self.logger.info("Suggestion window hidden")
+                self.logger.error(f"Error hiding suggestion window: {e}")
 
     def toggle(self):
         """Toggle the suggestion window visibility."""

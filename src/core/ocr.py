@@ -2,6 +2,7 @@
 OCR processing functionality for the Screenshot OCR Tool
 """
 import os
+import time
 from typing import Dict, Any, Optional
 
 # We'll use pytesseract for OCR
@@ -97,3 +98,39 @@ class OCRProcessor:
         # Write the text to the file
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(text)
+            
+    def cleanup_old_files(self, output_dir: str, max_age_hours: int = 1) -> None:
+        """
+        Delete files older than the specified age from the output directory.
+        
+        Args:
+            output_dir: Directory containing files to clean up
+            max_age_hours: Maximum age of files in hours (default: 1)
+        """
+        if not os.path.exists(output_dir):
+            return
+            
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+        
+        # Get all files in the output directory
+        for filename in os.listdir(output_dir):
+            filepath = os.path.join(output_dir, filename)
+            
+            # Skip directories
+            if os.path.isdir(filepath):
+                continue
+                
+            # Check if the file is a screenshot or text file
+            if filename.endswith('.png') or filename.endswith('.txt'):
+                # Check file age
+                file_time = os.path.getmtime(filepath)
+                age_seconds = current_time - file_time
+                
+                # Delete if older than max age
+                if age_seconds > max_age_seconds:
+                    try:
+                        os.remove(filepath)
+                        print(f"Deleted old file: {filename}")
+                    except Exception as e:
+                        print(f"Error deleting file {filename}: {e}")

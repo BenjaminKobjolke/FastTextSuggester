@@ -30,8 +30,13 @@ class ScreenshotOCRTool:
         # Initialize configuration
         self.config = Config()
         
-        # Initialize logger
-        self.logger = Logger()
+        # Initialize logger with config
+        self.logger = Logger(self.config)
+        
+        # Flags for thread-safe operations
+        self.stop_ocr = False
+        self.ocr_thread = None
+        self.hide_suggestion_window = False
         
         # Initialize components
         output_dir = self.config.get_output_directory()
@@ -76,7 +81,14 @@ class ScreenshotOCRTool:
         # If suggestion window is visible, just hide it
         if self.suggestion_settings["enabled"] and self.suggestion_window and self.suggestion_window.is_visible:
             self.logger.info("Hiding suggestion window")
-            self.suggestion_window.hide()
+            
+            # If OCR is in progress, try to stop it
+            if hasattr(self, 'ocr_thread') and self.ocr_thread and self.ocr_thread.is_alive():
+                self.logger.info("Stopping OCR process")
+                self.stop_ocr = True
+            
+            # Set flag to hide window in main thread
+            self.hide_suggestion_window = True
             return
             
         # Otherwise, capture and process screenshot
@@ -98,6 +110,9 @@ class ScreenshotOCRTool:
         """
         try:
             self.logger.info("Capturing screenshot...")
+            
+            # Reset stop flag
+            self.stop_ocr = False
             
             # Capture screenshot (this must happen first)
             screenshot_path, timestamp = self.screenshot_capture.capture_full_screen()
@@ -123,12 +138,12 @@ class ScreenshotOCRTool:
                     self.logger.info("No recent OCR file, showing processing indicator")
             
             # Process with OCR in a separate thread
-            ocr_thread = threading.Thread(
+            self.ocr_thread = threading.Thread(
                 target=self._process_ocr_in_background,
                 args=(screenshot_path, timestamp)
             )
-            ocr_thread.daemon = True
-            ocr_thread.start()
+            self.ocr_thread.daemon = True
+            self.ocr_thread.start()
             
         except Exception as e:
             # Clear OCR in progress status on error
@@ -148,6 +163,18 @@ class ScreenshotOCRTool:
         try:
             self.logger.info("Processing screenshot with OCR in background...")
             
+            # Check if we should stop
+            if self.stop_ocr:
+                self.logger.info("OCR process stopped by user")
+                
+                # Clear OCR in progress status
+                if self.suggestion_settings["enabled"] and self.suggestion_window:
+                    self.suggestion_window.set_ocr_in_progress(False)
+                
+                # Clean up temporary screenshot
+                self.screenshot_capture.cleanup_temp_files(screenshot_path)
+                return
+            
             # Process with OCR
             text = self.ocr_processor.process_image(screenshot_path)
             
@@ -158,6 +185,10 @@ class ScreenshotOCRTool:
             
             self.ocr_processor.save_text_to_file(text, output_path)
             self.logger.info(f"OCR text saved to: {output_path}")
+            
+            # Clean up old files
+            self.ocr_processor.cleanup_old_files(output_dir)
+            self.logger.info("Cleaned up old files")
             
             # Update suggestion manager with new text and clear OCR in progress status
             if self.suggestion_settings["enabled"] and self.suggestion_manager:
@@ -187,7 +218,14 @@ class ScreenshotOCRTool:
         # If suggestion window is visible, just hide it
         if self.suggestion_settings["enabled"] and self.suggestion_window and self.suggestion_window.is_visible:
             self.logger.info("Hiding suggestion window")
-            self.suggestion_window.hide()
+            
+            # If OCR is in progress, try to stop it
+            if hasattr(self, 'ocr_thread') and self.ocr_thread and self.ocr_thread.is_alive():
+                self.logger.info("Stopping OCR process")
+                self.stop_ocr = True
+            
+            # Set flag to hide window in main thread
+            self.hide_suggestion_window = True
             return
             
         # Otherwise, try to load the latest OCR file and show the window
@@ -241,11 +279,16 @@ class ScreenshotOCRTool:
                             except Exception as e:
                                 self.logger.error(f"Error updating Tkinter: {e}")
                     
-                    # Check if we need to show the suggestion window
+                    # Check if we need to show or hide the suggestion window
                     if self.show_suggestion_window and self.suggestion_window:
                         self.logger.info("Showing suggestion window from main thread")
                         self.suggestion_window.show()
                         self.show_suggestion_window = False
+                    
+                    if self.hide_suggestion_window and self.suggestion_window:
+                        self.logger.info("Hiding suggestion window from main thread")
+                        self.suggestion_window.hide()
+                        self.hide_suggestion_window = False
                     
                     import time
                     time.sleep(0.01)  # Short sleep to reduce CPU usage

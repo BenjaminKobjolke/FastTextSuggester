@@ -107,3 +107,14 @@ class Config:
             "max_results": self.config.getint("Suggestions", "max_results", fallback=10),
             "show_at_startup": self.config.getboolean("Suggestions", "show_at_startup", fallback=False)
         }
+        
+    def get_logging_settings(self) -> Dict[str, Any]:
+        """
+        Get logging settings.
+
+        Returns:
+            Dictionary of logging settings
+        """
+        return {
+            "debug": self.config.getboolean("Logging", "debug", fallback=False),
+        }
