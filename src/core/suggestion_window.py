@@ -38,6 +38,69 @@ class SuggestionWindow:
         self.is_visible = False
         self.last_active_window = None
         self.hotkey_handler = None
+        self.ocr_in_progress = False  # Flag to track OCR processing status
+        
+    def set_ocr_in_progress(self, in_progress: bool = True):
+        """
+        Set the OCR processing status flag.
+        This method only sets the flag without any UI interaction.
+        
+        Args:
+            in_progress: Whether OCR is currently in progress
+        """
+        # Just set the flag - no Tkinter calls
+        self.ocr_in_progress = in_progress
+        
+        if self.logger:
+            self.logger.info(f"OCR in progress flag set to: {in_progress}")
+    
+    def update_ocr_status_ui(self):
+        """
+        Update the UI based on OCR status.
+        This method should only be called from the main thread.
+        """
+        if not self.input_field or not self.window:
+            return
+            
+        try:
+            if self.ocr_in_progress:
+                # Add red border when OCR is in progress
+                self.input_field.configure(
+                    highlightthickness=2,
+                    highlightbackground='#FF0000',  # Red border
+                    highlightcolor='#FF0000'  # Red border when focused
+                )
+                
+                # Only show placeholder if there are no suggestions available
+                # and the input field is empty
+                has_words = self.suggestion_manager and hasattr(self.suggestion_manager, 'words') and self.suggestion_manager.words
+                
+                if self.is_visible and not self.input_var.get() and not self.suggestions and not has_words:
+                    self.input_var.set("Processing OCR...")
+                elif self.input_var.get() == "Processing OCR..." and (self.suggestions or has_words):
+                    # Clear placeholder if we have words available
+                    self.input_var.set("")
+                    
+                    # Load suggestions if we have words but no suggestions yet
+                    if not self.suggestions and has_words:
+                        self.suggestions = self.suggestion_manager.words[:10]
+                        self._update_suggestions(self.suggestions)
+            else:
+                # Remove border when OCR is complete
+                self.input_field.configure(
+                    highlightthickness=0  # No border
+                )
+                
+                # Clear the placeholder text if it's there
+                if self.is_visible and self.input_var.get() == "Processing OCR...":
+                    self.input_var.set("")
+                
+            if self.logger:
+                #self.logger.info(f"OCR status UI updated, in progress: {self.ocr_in_progress}")
+                pass
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Error updating OCR status UI: {e}")
 
     def create_window(self):
         """Create the suggestion window."""
@@ -136,8 +199,15 @@ class SuggestionWindow:
             
             # Clear input field
             self.input_var.set('')
-            self.suggestions = []
-            self._update_suggestions([])
+            
+            # Load suggestions from the suggestion manager if available
+            if self.suggestion_manager and hasattr(self.suggestion_manager, 'words') and self.suggestion_manager.words:
+                # Get all words as initial suggestions (limited to top 10)
+                self.suggestions = self.suggestion_manager.words[:10]
+                self._update_suggestions(self.suggestions)
+            else:
+                self.suggestions = []
+                self._update_suggestions([])
             
             # Get active window position and size
             try:
@@ -235,6 +305,10 @@ class SuggestionWindow:
         """Update the suggestion listbox."""
         # Clear listbox
         self.suggestion_listbox.delete(0, tk.END)
+        
+        # Clear any "Processing OCR..." placeholder
+        if self.input_var.get() == "Processing OCR...":
+            self.input_var.set("")
         
         if not suggestions:
             # Hide listbox

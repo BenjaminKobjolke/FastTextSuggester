@@ -94,16 +94,61 @@ class ScreenshotOCRTool:
     def capture_and_process(self) -> None:
         """
         Capture a screenshot, process it with OCR, and save the text.
+        Uses threading to improve responsiveness.
         """
         try:
             self.logger.info("Capturing screenshot...")
             
-            # Capture screenshot
+            # Capture screenshot (this must happen first)
             screenshot_path, timestamp = self.screenshot_capture.capture_full_screen()
             self.logger.info(f"Screenshot captured: {screenshot_path}")
             
+            # Check if there's a recent OCR file
+            has_recent_file = False
+            if self.suggestion_settings["enabled"] and self.suggestion_manager:
+                has_recent_file = self.suggestion_manager.load_latest_ocr_file()
+            
+            # Set flag to show suggestion window immediately
+            if self.suggestion_settings["enabled"] and self.suggestion_window:
+                # Set OCR in progress flag
+                self.suggestion_window.set_ocr_in_progress(True)
+                
+                # Show the window
+                self.show_suggestion_window = True
+                
+                # If we have a recent file, log it
+                if has_recent_file:
+                    self.logger.info("Recent OCR file loaded, showing suggestions")
+                else:
+                    self.logger.info("No recent OCR file, showing processing indicator")
+            
+            # Process with OCR in a separate thread
+            ocr_thread = threading.Thread(
+                target=self._process_ocr_in_background,
+                args=(screenshot_path, timestamp)
+            )
+            ocr_thread.daemon = True
+            ocr_thread.start()
+            
+        except Exception as e:
+            # Clear OCR in progress status on error
+            if self.suggestion_settings["enabled"] and self.suggestion_window:
+                self.suggestion_window.set_ocr_in_progress(False)
+                
+            self.logger.error(f"Error in capture and process: {str(e)}")
+            
+    def _process_ocr_in_background(self, screenshot_path: str, timestamp: datetime) -> None:
+        """
+        Process OCR in a background thread to improve responsiveness.
+        
+        Args:
+            screenshot_path: Path to the screenshot file
+            timestamp: Timestamp of the screenshot
+        """
+        try:
+            self.logger.info("Processing screenshot with OCR in background...")
+            
             # Process with OCR
-            self.logger.info("Processing screenshot with OCR...")
             text = self.ocr_processor.process_image(screenshot_path)
             
             # Save text to file
@@ -114,11 +159,25 @@ class ScreenshotOCRTool:
             self.ocr_processor.save_text_to_file(text, output_path)
             self.logger.info(f"OCR text saved to: {output_path}")
             
+            # Update suggestion manager with new text and clear OCR in progress status
+            if self.suggestion_settings["enabled"] and self.suggestion_manager:
+                self.suggestion_manager.load_latest_ocr_file()
+                
+                # Clear OCR in progress status
+                if self.suggestion_window:
+                    self.suggestion_window.set_ocr_in_progress(False)
+                    
+                self.logger.info("Updated suggestion window with OCR results")
+            
             # Clean up temporary screenshot
             self.screenshot_capture.cleanup_temp_files(screenshot_path)
             
         except Exception as e:
-            self.logger.error(f"Error in capture and process: {str(e)}")
+            # Clear OCR in progress status on error
+            if self.suggestion_settings["enabled"] and self.suggestion_window:
+                self.suggestion_window.set_ocr_in_progress(False)
+                
+            self.logger.error(f"Error in background OCR processing: {str(e)}")
 
     def handle_suggestion_hotkey(self) -> None:
         """
@@ -133,6 +192,9 @@ class ScreenshotOCRTool:
             
         # Otherwise, try to load the latest OCR file and show the window
         if self.suggestion_settings["enabled"] and self.suggestion_window:
+            # Make sure OCR in progress is set to false (no red border)
+            self.suggestion_window.set_ocr_in_progress(False)
+            
             if self.suggestion_manager.load_latest_ocr_file():
                 self.show_suggestion_window = True
                 self.logger.info("OCR file loaded, will show suggestion window")
@@ -173,6 +235,9 @@ class ScreenshotOCRTool:
                         if hasattr(self.suggestion_window, 'root') and self.suggestion_window.root:
                             try:
                                 self.suggestion_window.root.update()
+                                
+                                # Update OCR status UI in the main thread
+                                self.suggestion_window.update_ocr_status_ui()
                             except Exception as e:
                                 self.logger.error(f"Error updating Tkinter: {e}")
                     

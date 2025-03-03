@@ -46,15 +46,16 @@ class OCRProcessor:
         if self.settings.get("optimize", True):
             image = self._optimize_image(image)
         
-        # Perform OCR
-        config = f"-l {self.settings.get('language', 'eng')} --psm 6"
+        # Perform OCR with optimized configuration
+        # Use both German and English languages, and LSTM OCR Engine only (faster)
+        config = f"-l deu+eng --psm 6 --oem 1"
         text = pytesseract.image_to_string(image, config=config)
         
         return text
 
     def _optimize_image(self, image: Image.Image) -> Image.Image:
         """
-        Apply optimizations to improve OCR accuracy.
+        Apply optimizations to improve OCR accuracy without resizing.
 
         Args:
             image: PIL Image object
@@ -62,17 +63,25 @@ class OCRProcessor:
         Returns:
             Optimized PIL Image object
         """
-        # Convert to grayscale
-        image = image.convert('L')
-        
-        # You can add more optimizations here as needed
-        # For example:
-        # - Increase contrast
-        # - Apply thresholding
-        # - Remove noise
-        # - Resize image
-        
-        return image
+        try:
+            # Convert to grayscale
+            image = image.convert('L')
+            
+            # Increase contrast
+            from PIL import ImageEnhance
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.5)  # Enhance contrast by 50%
+            
+            # Apply auto-level to improve text visibility
+            from PIL import ImageOps
+            image = ImageOps.autocontrast(image, cutoff=0.5)
+            
+            return image
+            
+        except Exception as e:
+            # If any optimization fails, return the original image
+            print(f"Image optimization error: {e}")
+            return image
 
     def save_text_to_file(self, text: str, output_path: str) -> None:
         """

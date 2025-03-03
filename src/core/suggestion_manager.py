@@ -28,10 +28,10 @@ class SuggestionManager:
 
     def load_latest_ocr_file(self) -> bool:
         """
-        Load the most recent OCR text file.
+        Load the most recent OCR text file if it's not older than 1 minute.
 
         Returns:
-            True if file was loaded successfully, False otherwise
+            True if a recent file was loaded successfully, False otherwise
         """
         try:
             # Find the most recent file in the output directory
@@ -49,7 +49,16 @@ class SuggestionManager:
                 
             # Sort by modification time (newest first)
             files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            self.last_file = files[0]
+            latest_file = files[0]
+            
+            # Check if the file is recent (less than 1 minute old)
+            file_time = os.path.getmtime(latest_file)
+            current_time = time.time()
+            if (current_time - file_time) > 60:  # 60 seconds = 1 minute
+                print(f"Most recent OCR file is too old ({int(current_time - file_time)} seconds)")
+                return False
+            
+            self.last_file = latest_file
             
             # Parse the file
             return self._parse_ocr_file(self.last_file)
