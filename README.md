@@ -10,6 +10,7 @@ A simple tool that captures screenshots when a hotkey is pressed, processes the 
 - Auto-suggest words from OCR results in a minimalistic input window
 - Load text files from the data directory for additional suggestions
 - Support for line-based suggestions from files ending with \_line.txt
+- Support for TSV (tab-separated values) and CSV (comma-separated values) files with individual value suggestions
 - Insert selected text into the active application with a single keypress
 - Configurable settings via settings.ini
 
@@ -96,12 +97,28 @@ show_at_startup = False
 9. Press the hotkey again to close the suggestion window
 10. Press Ctrl+C in the terminal to exit the tool
 
+## Special Commands
+
+The suggestion window supports special commands that can be typed in the input field:
+
+- **/reload**: Reloads all data sources without closing the window
+
+  - Refreshes all text files from the data directory
+  - Reloads the latest OCR file from the output directory
+  - Updates the suggestions displayed in the window
+  - Useful when you've added or modified files and want to see the changes immediately
+
+- **/exit**: Exits the application completely
+  - Provides a quick way to close the application from the suggestion window
+
 ## Example Files
 
 The `data_example` folder contains example files that demonstrate how the suggestion system works:
 
 - `example_line.txt`: Contains complete lines that will be suggested as-is when a matching term is found
 - `example_words.txt`: Contains text that will be processed for individual word and phrase suggestions
+- `example_data.tsv`: Contains tab-separated values that will be suggested individually
+- `example_contacts.csv`: Contains comma-separated values that will be suggested individually
 
 To try these examples:
 
@@ -120,8 +137,18 @@ To try these examples:
 2. Run the application and press the suggestion hotkey (Ctrl+Alt+F12 by default)
 3. Start typing a word like "please" or "meeting" to see line-based suggestions from example_line.txt
 4. Try typing words like "programming" or "software" to see word-based suggestions from example_words.txt
+5. Try typing names or email addresses to see suggestions from the example_data.tsv and example_contacts.csv files
 
-This demonstrates the difference between regular word-based suggestions and complete line suggestions.
+## File Type Support
+
+The application supports different types of files in the data directory:
+
+1. **Regular text files (.txt)**: Processed for individual words and phrases
+2. **Line-based text files (\_line.txt)**: Each line is suggested as a complete unit
+3. **TSV files (.tsv)**: Each value in the tab-separated file is suggested individually
+4. **CSV files (.csv)**: Each value in the comma-separated file is suggested individually
+
+This allows you to organize your suggestions in the most appropriate format for your needs.
 
 ## License
 

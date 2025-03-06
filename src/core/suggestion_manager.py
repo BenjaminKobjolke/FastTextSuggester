@@ -180,20 +180,26 @@ class SuggestionManager:
                 print(f"Data directory {self.data_directory} does not exist")
                 return False
 
-            # Get all text files in the data directory
+            # Get all text, TSV, and CSV files in the data directory
             files = [
                 os.path.join(self.data_directory, f) 
                 for f in os.listdir(self.data_directory) 
-                if f.endswith('.txt')
+                if f.endswith('.txt') or f.endswith('.tsv') or f.endswith('.csv')
             ]
             
             if not files:
-                print(f"No text files found in {self.data_directory}")
+                print(f"No text, TSV, or CSV files found in {self.data_directory}")
                 return False
             
             # Process each file
             for file_path in files:
-                if file_path.endswith('_line.txt'):
+                if file_path.endswith('.tsv'):
+                    # For TSV files, extract all values
+                    self._parse_tsv_file(file_path)
+                elif file_path.endswith('.csv'):
+                    # For CSV files, extract all values
+                    self._parse_csv_file(file_path)
+                elif file_path.endswith('_line.txt'):
                     # For _line.txt files, store complete lines
                     self._parse_line_file(file_path)
                 else:
@@ -230,6 +236,72 @@ class SuggestionManager:
             
         except Exception as e:
             print(f"Error parsing line file {file_path}: {e}")
+            return False
+    
+    def _parse_tsv_file(self, file_path: str) -> bool:
+        """
+        Parse a TSV file to extract individual values.
+        
+        Args:
+            file_path: Path to the TSV file
+            
+        Returns:
+            True if file was parsed successfully, False otherwise
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                # Read all lines
+                for line in f:
+                    # Skip empty lines
+                    if not line.strip():
+                        continue
+                        
+                    # Split by tabs
+                    values = line.strip().split('\t')
+                    
+                    # Add each value to words collection
+                    for value in values:
+                        value = value.strip()
+                        if value and value not in self.words:
+                            self.words.append(value)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error parsing TSV file {file_path}: {e}")
+            return False
+    
+    def _parse_csv_file(self, file_path: str) -> bool:
+        """
+        Parse a CSV file to extract individual values.
+        
+        Args:
+            file_path: Path to the CSV file
+            
+        Returns:
+            True if file was parsed successfully, False otherwise
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                # Read all lines
+                for line in f:
+                    # Skip empty lines
+                    if not line.strip():
+                        continue
+                        
+                    # Split by commas
+                    values = line.strip().split(',')
+                    
+                    # Add each value to words collection
+                    for value in values:
+                        value = value.strip()
+                        if value and value not in self.words:
+                            self.words.append(value)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error parsing CSV file {file_path}: {e}")
             return False
     
     def _parse_data_file(self, file_path: str) -> bool:
