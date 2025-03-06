@@ -289,21 +289,28 @@ class SuggestionWindow:
         """Internal method to hide the window in the main thread."""
         try:
             if self.window:
-                self.window.withdraw()
+                # Store the last active window before destroying
+                last_active = self.last_active_window
+                
+                # Destroy the window completely instead of just hiding it
+                self.window.destroy()
+                self.window = None
                 
                 # Restore focus to the previous window
-                if self.last_active_window:
+                if last_active:
                     try:
-                        win32gui.SetForegroundWindow(self.last_active_window)
+                        # Small delay to ensure window is fully destroyed
+                        time.sleep(0.1)
+                        win32gui.SetForegroundWindow(last_active)
                     except Exception as e:
                         if self.logger:
                             self.logger.error(f"Error restoring focus: {e}")
                 
                 if self.logger:
-                    self.logger.info("Suggestion window hidden")
+                    self.logger.info("Suggestion window destroyed")
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Error hiding suggestion window: {e}")
+                self.logger.error(f"Error destroying suggestion window: {e}")
 
     def toggle(self):
         """Toggle the suggestion window visibility."""
@@ -335,6 +342,10 @@ class SuggestionWindow:
             self.logger.info("Exit command detected, closing application")
             self.exit_application()
             return
+        elif text == "/reload":
+            self.logger.info("Reload command detected, reloading data files")
+            self._reload_data()
+            return
             
         if text:
             # Get suggestions
@@ -344,6 +355,35 @@ class SuggestionWindow:
             # Clear suggestions
             self.suggestions = []
             self._update_suggestions([])
+    
+    def _reload_data(self):
+        """Reload data files and latest OCR file."""
+        # Clear input field
+        self.input_var.set("")
+        
+        # Reload data files
+        data_loaded = self.suggestion_manager.load_data_files()
+        
+        # Reload latest OCR file
+        ocr_loaded = self.suggestion_manager.load_latest_ocr_file()
+        
+        # Update suggestions
+        if hasattr(self.suggestion_manager, 'lines') and self.suggestion_manager.lines:
+            self.suggestions = self.suggestion_manager.lines[:10]
+        elif hasattr(self.suggestion_manager, 'words') and self.suggestion_manager.words:
+            self.suggestions = self.suggestion_manager.words[:10]
+        else:
+            self.suggestions = []
+        
+        # Update UI
+        self._update_suggestions(self.suggestions)
+        
+        # Show feedback message
+        self.input_var.set("Data reloaded successfully")
+        
+        # Schedule clearing the feedback message after a delay
+        if self.window:
+            self.window.after(2000, lambda: self.input_var.set(""))
             
     def exit_application(self):
         """Exit the application cleanly."""

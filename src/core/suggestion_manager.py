@@ -66,8 +66,13 @@ class SuggestionManager:
             
             self.last_file = latest_file
             
-            # Parse the file
-            return self._parse_ocr_file(self.last_file)
+            # Parse the file - check if it's a line-based file
+            if self.last_file.endswith('_line.txt'):
+                # For _line.txt files, store complete lines
+                return self._parse_line_file(self.last_file)
+            else:
+                # For regular text files, extract words and phrases
+                return self._parse_ocr_file(self.last_file)
             
         except Exception as e:
             print(f"Error loading OCR file: {e}")
@@ -98,15 +103,27 @@ class SuggestionManager:
             # Extract email addresses and their components
             emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', content)
             for email in emails:
-                # Add the full email
+                # Add the full email (highest priority)
                 self.words.append(email)
                 
                 # Extract username part (before @)
                 if '@' in email:
                     username = email.split('@')[0]
+                    
+                    # Add the full username (second priority)
                     self.words.append(username)
                     
-                    # Split username by common separators and add parts
+                    # Add username with @ and domain (for partial matches)
+                    if '.' in username:
+                        # For emails like frank.schnepf@domain.com, add frank@domain.com
+                        parts = username.split('.')
+                        if len(parts) > 1:
+                            for i in range(len(parts)):
+                                partial_username = parts[i]
+                                if partial_username and len(partial_username) > 1:
+                                    self.words.append(f"{partial_username}@{email.split('@')[1]}")
+                    
+                    # Split username by common separators and add parts (lowest priority)
                     username_parts = re.split(r'[._-]', username)
                     for part in username_parts:
                         if part and len(part) > 2:  # Only add parts with length > 2
@@ -284,6 +301,14 @@ class SuggestionManager:
             if partial_text in line.lower()
         ]
         
+        # Special handling for email-like inputs (contains @ or .)
+        email_matches = []
+        if '@' in partial_text or '.' in partial_text:
+            email_matches = [
+                word for word in self.words 
+                if '@' in word and partial_text in word.lower()
+            ]
+        
         # Then, look for exact prefix matches in words
         prefix_word_matches = [word for word in self.words if word.lower().startswith(partial_text)]
         
@@ -302,8 +327,9 @@ class SuggestionManager:
             if partial_text in phrase.lower() and not phrase.lower().startswith(partial_text)
         ]
         
-        # Combine results with priority order: lines first, then prefix matches, then substring matches
-        all_matches = line_matches + prefix_word_matches + prefix_phrase_matches + substring_word_matches + substring_phrase_matches
+        # Combine results with priority order: 
+        # lines first, then email matches, then prefix matches, then substring matches
+        all_matches = line_matches + email_matches + prefix_word_matches + prefix_phrase_matches + substring_word_matches + substring_phrase_matches
         
         # Remove duplicates while preserving order
         unique_matches = []
