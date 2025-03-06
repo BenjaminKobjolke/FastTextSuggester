@@ -51,7 +51,10 @@ class ScreenshotOCRTool:
         
         # Initialize suggestion components if enabled
         if self.suggestion_settings["enabled"]:
-            self.suggestion_manager = SuggestionManager(self.config.get_output_directory())
+            self.suggestion_manager = SuggestionManager(
+                output_directory=self.config.get_output_directory(),
+                data_directory=self.config.get_data_directory()
+            )
             self.suggestion_window = SuggestionWindow(self.suggestion_manager, self.logger)
             self.suggestion_window_thread = None
             self.show_suggestion_window = False  # Flag to indicate when to show the window
@@ -96,12 +99,21 @@ class ScreenshotOCRTool:
         
         # Set flag to show suggestion window in main thread
         if self.suggestion_settings["enabled"] and self.suggestion_window:
+            # Reload data files to pick up any changes
+            self.suggestion_manager.load_data_files()
+            self.logger.info("Data files reloaded for capture")
+            
             # Load the latest OCR file
-            if self.suggestion_manager.load_latest_ocr_file():
-                self.show_suggestion_window = True
+            ocr_loaded = self.suggestion_manager.load_latest_ocr_file()
+            
+            # Show the suggestion window regardless of OCR file availability
+            # since we now have data files as a source of suggestions
+            self.show_suggestion_window = True
+            
+            if ocr_loaded:
                 self.logger.info("OCR file loaded, will show suggestion window")
             else:
-                self.logger.warning("No OCR file found, not showing suggestion window")
+                self.logger.info("No OCR file found, showing window with data files only")
 
     def capture_and_process(self) -> None:
         """
@@ -233,11 +245,21 @@ class ScreenshotOCRTool:
             # Make sure OCR in progress is set to false (no red border)
             self.suggestion_window.set_ocr_in_progress(False)
             
-            if self.suggestion_manager.load_latest_ocr_file():
-                self.show_suggestion_window = True
-                self.logger.info("OCR file loaded, will show suggestion window")
+            # Reload data files to pick up any changes
+            self.suggestion_manager.load_data_files()
+            self.logger.info("Data files reloaded")
+            
+            # Try to load the latest OCR file
+            ocr_loaded = self.suggestion_manager.load_latest_ocr_file()
+            if ocr_loaded:
+                self.logger.info("OCR file loaded")
             else:
-                self.logger.warning("No OCR file found, not showing suggestion window")
+                self.logger.info("No recent OCR file found, using data files only")
+            
+            # Show the suggestion window regardless of OCR file availability
+            # since we now have data files as a source of suggestions
+            self.show_suggestion_window = True
+            self.logger.info("Showing suggestion window")
 
     def start(self) -> None:
         """Start the Screenshot OCR Tool."""
@@ -247,6 +269,12 @@ class ScreenshotOCRTool:
             # Initialize suggestion window if enabled
             if self.suggestion_settings["enabled"] and self.suggestion_window:
                 self.logger.info("Initializing suggestion window...")
+                
+                # Load data files at startup
+                self.suggestion_manager.load_data_files()
+                self.logger.info("Data files loaded at startup")
+                
+                # Create the window
                 self.suggestion_window.create_window()
                 
                 # Only show window at startup if configured to do so

@@ -1,0 +1,29 @@
+This is an example text file for word-based suggestions.
+
+When you type in the suggestion window, individual words from this file will be suggested.
+For example, if you type "exam", the word "example" might be suggested.
+
+Unlike files ending with _line.txt, this file will not provide complete line suggestions.
+Instead, it will extract individual words and short phrases.
+
+Some technical terms that might be useful:
+programming
+development
+software
+application
+interface
+database
+framework
+algorithm
+function
+variable
+parameter
+component
+module
+library
+repository
+deployment
+testing
+debugging
+optimization
+documentation

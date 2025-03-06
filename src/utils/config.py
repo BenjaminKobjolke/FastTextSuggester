@@ -38,7 +38,8 @@ class Config:
             "optimize": "True"
         }
         self.config["Output"] = {
-            "directory": "output"
+            "directory": "output",
+            "data_directory": "data"
         }
         
         with open(self.config_path, "w") as config_file:
@@ -95,6 +96,21 @@ class Config:
             os.makedirs(output_dir)
             
         return output_dir
+        
+    def get_data_directory(self) -> str:
+        """
+        Get the configured data directory.
+
+        Returns:
+            Path to the data directory
+        """
+        data_dir = self.config.get("Output", "data_directory", fallback="data")
+        
+        # Create the data directory if it doesn't exist
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            
+        return data_dir
         
     def get_suggestion_settings(self) -> Dict[str, Any]:
         """

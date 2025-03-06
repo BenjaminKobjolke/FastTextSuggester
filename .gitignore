@@ -172,3 +172,4 @@ cython_debug/
 output
 logs
 settings.ini
+data

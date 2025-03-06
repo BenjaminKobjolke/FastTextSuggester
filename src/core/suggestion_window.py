@@ -201,10 +201,20 @@ class SuggestionWindow:
             self.input_var.set('')
             
             # Load suggestions from the suggestion manager if available
-            if self.suggestion_manager and hasattr(self.suggestion_manager, 'words') and self.suggestion_manager.words:
-                # Get all words as initial suggestions (limited to top 10)
-                self.suggestions = self.suggestion_manager.words[:10]
-                self._update_suggestions(self.suggestions)
+            if self.suggestion_manager:
+                # First check if we have any lines (highest priority)
+                if hasattr(self.suggestion_manager, 'lines') and self.suggestion_manager.lines:
+                    # Get lines as initial suggestions (limited to top 10)
+                    self.suggestions = self.suggestion_manager.lines[:10]
+                    self._update_suggestions(self.suggestions)
+                # If no lines, fall back to words
+                elif hasattr(self.suggestion_manager, 'words') and self.suggestion_manager.words:
+                    # Get all words as initial suggestions (limited to top 10)
+                    self.suggestions = self.suggestion_manager.words[:10]
+                    self._update_suggestions(self.suggestions)
+                else:
+                    self.suggestions = []
+                    self._update_suggestions([])
             else:
                 self.suggestions = []
                 self._update_suggestions([])
@@ -300,12 +310,21 @@ class SuggestionWindow:
         if self.is_visible:
             self.hide()
         else:
-            # Load the latest OCR file
-            if self.suggestion_manager.load_latest_ocr_file():
-                self.show()
-            else:
-                if self.logger:
-                    self.logger.warning("No OCR file found, not showing suggestion window")
+            # Load data files first
+            self.suggestion_manager.load_data_files()
+            
+            # Then try to load the latest OCR file
+            ocr_loaded = self.suggestion_manager.load_latest_ocr_file()
+            
+            # Show the window regardless of OCR file availability
+            # since we now have data files as a source of suggestions
+            self.show()
+            
+            if self.logger:
+                if ocr_loaded:
+                    self.logger.info("OCR file loaded for toggle")
+                else:
+                    self.logger.info("No recent OCR file found for toggle, using data files only")
 
     def _on_input_change(self, *args):
         """Handle input field changes."""
