@@ -421,6 +421,8 @@ class SuggestionManager:
         if not text:
             return
             
+        # Add a longer delay before inserting text to ensure focus is properly restored
+        time.sleep(.1)  # Increased delay to ensure focus is stable
+            
         # Use keyboard library to type the text
         keyboard.write(text)
-        time.sleep(0.1)  # Small delay to ensure text is inserted

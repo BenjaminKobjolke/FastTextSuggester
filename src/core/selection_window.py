@@ -48,8 +48,8 @@ class SelectionWindow:
         self.window.grab_set()  # Make window modal
         
         # Set window size
-        window_width = 300
-        window_height = 120  # Slightly taller for the two lines
+        window_width = 400  # Increased width
+        window_height = 160  # Increased height
         
         # Get active window position and size
         try:
@@ -79,11 +79,14 @@ class SelectionWindow:
         label = tk.Label(
             self.window,
             text="Press 1 for whole screen\nPress 2 for active window",
-            font=('Arial', 12),
-            bg='#2b2b2b',
+            font=('Arial', 16),  # Increased font size
+            bg='#1e1e1e',  # Darker background
             fg='#FFFFFF'  # White text
         )
-        label.pack(pady=20)
+        label.pack(pady=30)  # Increased padding
+        
+        # Configure window appearance
+        self.window.configure(bg='#1e1e1e')  # Darker background
         
         # Bind key events
         self.window.bind('1', self._on_key_1)

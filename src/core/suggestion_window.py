@@ -41,6 +41,7 @@ class SuggestionWindow:
         self.hotkey_handler = None
         self.ocr_in_progress = False  # Flag to track OCR processing status
         self.on_escape_callback = on_escape_callback  # Callback for Escape key
+        self.text_to_insert = None  # Text to insert after window is destroyed
         
     def set_ocr_in_progress(self, in_progress: bool = True):
         """
@@ -127,12 +128,12 @@ class SuggestionWindow:
             self.logger.info("Created Toplevel window")
         
         # Set window size
-        window_width = 400
-        window_height = 40
+        window_width = 500  # Increased width
+        window_height = 50  # Increased height
         self.window.geometry(f"{window_width}x{window_height}")
         
         # Configure window appearance
-        self.window.configure(bg='#2b2b2b')  # Dark background
+        self.window.configure(bg='#1e1e1e')  # Darker background
         
         # Create input field
         self.input_var = tk.StringVar()
@@ -141,28 +142,28 @@ class SuggestionWindow:
         self.input_field = tk.Entry(
             self.window,
             textvariable=self.input_var,
-            font=('Arial', 14),  # Larger font
-            bg='#FFFFFF',  # White background
-            fg='#000000',  # Black text
-            insertbackground='#000000',  # Black cursor
+            font=('Arial', 16),  # Increased font size
+            bg='#2d2d2d',  # Dark background
+            fg='#FFFFFF',  # White text
+            insertbackground='#FFFFFF',  # White cursor
             relief='flat',  # No border
             highlightthickness=0  # No highlight border
         )
-        self.input_field.pack(fill=tk.X, expand=True, padx=5, pady=5)
+        self.input_field.pack(fill=tk.X, expand=True, padx=8, pady=8)  # Increased padding
         
         # Create suggestion listbox
         self.suggestion_listbox = tk.Listbox(
             self.window,
-            font=('Arial', 14),  # Larger font
-            bg='#FFFFFF',  # White background
-            fg='#000000',  # Black text
+            font=('Arial', 16),  # Increased font size
+            bg='#2d2d2d',  # Dark background
+            fg='#FFFFFF',  # White text
             selectbackground='#4a6ea9',  # Blue selection background
             selectforeground='#FFFFFF',  # White text when selected
             relief='flat',  # No border
             highlightthickness=0,  # No highlight border
             height=0
         )
-        self.suggestion_listbox.pack(fill=tk.X, expand=True, padx=5)
+        self.suggestion_listbox.pack(fill=tk.X, expand=True, padx=8)  # Increased padding
         
         # Bind events
         self.input_field.bind('<Return>', self._on_enter)
@@ -230,8 +231,8 @@ class SuggestionWindow:
                 active_center_y = top + (active_height // 2)
                 
                 # Calculate window position (center on active window)
-                window_width = 400
-                window_height = 40
+                window_width = 500  # Increased width
+                window_height = 50  # Increased height
                 x = max(0, active_center_x - (window_width // 2))
                 y = max(0, active_center_y - (window_height // 2))
             except Exception as e:
@@ -241,8 +242,8 @@ class SuggestionWindow:
                 
                 screen_width = self.window.winfo_screenwidth()
                 screen_height = self.window.winfo_screenheight()
-                window_width = 400
-                window_height = 40
+                window_width = 500  # Increased width
+                window_height = 50  # Increased height
                 x = (screen_width - window_width) // 2
                 y = (screen_height - window_height) // 2
             
@@ -251,7 +252,7 @@ class SuggestionWindow:
             
             # Enhance window visibility
             self.window.attributes('-topmost', True)
-            self.window.configure(bg='#2b2b2b')  # Dark background
+            self.window.configure(bg='#1e1e1e')  # Darker background
             
             # Show window with more aggressive update commands
             self.window.deiconify()
@@ -272,13 +273,23 @@ class SuggestionWindow:
             if self.logger:
                 self.logger.error(f"Error showing suggestion window: {e}")
 
-    def hide(self, event=None):
-        """Hide the suggestion window."""
+    def hide(self, event=None, text_to_insert=None):
+        """
+        Hide the suggestion window.
+        
+        Args:
+            event: The event that triggered the hide
+            text_to_insert: Text to insert after window is destroyed
+        """
         if not self.window:
             return
             
         # Set flag to indicate window should be hidden
         self.is_visible = False
+        
+        # Store text to insert
+        if text_to_insert is not None:
+            self.text_to_insert = text_to_insert
         
         # Call the escape callback if provided
         # Note: We don't call this in _hide_window because it might be called multiple times
@@ -300,6 +311,9 @@ class SuggestionWindow:
                 # Store the last active window before destroying
                 last_active = self.last_active_window
                 
+                # Store text to insert (if any)
+                text_to_insert = self.text_to_insert
+                
                 # Destroy the window completely instead of just hiding it
                 self.window.destroy()
                 self.window = None
@@ -308,6 +322,13 @@ class SuggestionWindow:
                 
                 if self.logger:
                     self.logger.info("Suggestion window destroyed")
+                
+                # Insert text after window is destroyed (if any)
+                if text_to_insert:
+                    if self.logger:
+                        self.logger.info(f"Inserting text after window destroyed: {text_to_insert}")
+                    self.suggestion_manager.insert_text(text_to_insert)
+                    self.text_to_insert = None
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Error destroying suggestion window: {e}")
@@ -416,7 +437,7 @@ class SuggestionWindow:
         if not suggestions:
             # Hide listbox
             self.suggestion_listbox.configure(height=0)
-            self.window.geometry(f"{self.window.winfo_width()}x40")
+            self.window.geometry(f"{self.window.winfo_width()}x50")  # Increased height
             return
             
         # Add suggestions to listbox
@@ -428,7 +449,7 @@ class SuggestionWindow:
         self.suggestion_listbox.configure(height=list_height)
         
         # Update window height
-        window_height = 40 + (list_height * 24)  # 24 pixels per list item
+        window_height = 50 + (list_height * 30)  # 30 pixels per list item (increased)
         self.window.geometry(f"{self.window.winfo_width()}x{window_height}")
         
         # Select first item
@@ -453,15 +474,11 @@ class SuggestionWindow:
                 self.logger.info("Suggestion selected, calling escape callback")
                 self.on_escape_callback()
                 
-            # Hide window
-            self.hide(None)  # Pass None to prevent hide from calling the callback again
+            # Hide window and pass the text to insert after window is destroyed
+            self.hide(None, selected_text)  # Pass None to prevent hide from calling the callback again
             
             # Don't try to restore focus - let the OS handle it
-            
-            # Insert text
-            self.suggestion_manager.insert_text(selected_text)
-            
-            # Don't automatically show window again - let the user press the hotkey if needed
+            # Text insertion is now handled in _hide_window after the window is destroyed
 
     def _on_escape(self, event=None):
         """Handle Escape key press."""
