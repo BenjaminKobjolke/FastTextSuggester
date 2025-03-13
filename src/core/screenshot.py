@@ -9,6 +9,7 @@ import tempfile
 
 # We'll use PIL for screenshot capture
 from PIL import ImageGrab
+import win32gui
 
 
 class ScreenshotCapture:
@@ -50,6 +51,40 @@ class ScreenshotCapture:
         
         # Capture the full screen
         screenshot = ImageGrab.grab()
+        screenshot.save(filepath)
+        
+        # Save a copy to the output directory if specified
+        if self.output_dir:
+            output_filepath = os.path.join(self.output_dir, filename)
+            try:
+                shutil.copy2(filepath, output_filepath)
+            except Exception as e:
+                # Just log the error, don't raise
+                print(f"Error saving screenshot to output directory: {e}")
+        
+        return filepath, timestamp
+
+    def capture_active_window(self) -> Tuple[str, datetime]:
+        """
+        Capture a screenshot of the active window.
+
+        Returns:
+            Tuple containing:
+                - Path to the saved screenshot
+                - Timestamp of the capture
+        """
+        timestamp = datetime.now()
+        filename = f"screenshot_{timestamp.strftime('%Y%m%d_%H%M%S')}.png"
+        filepath = os.path.join(self.temp_dir, filename)
+        
+        # Get the active window handle
+        hwnd = win32gui.GetForegroundWindow()
+        
+        # Get the window position and size
+        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+        
+        # Capture the active window
+        screenshot = ImageGrab.grab(bbox=(left, top, right, bottom))
         screenshot.save(filepath)
         
         # Save a copy to the output directory if specified

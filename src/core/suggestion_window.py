@@ -20,13 +20,14 @@ class SuggestionWindow:
     Provides an input field with auto-suggestions and text insertion.
     """
 
-    def __init__(self, suggestion_manager: SuggestionManager, logger: Logger = None):
+    def __init__(self, suggestion_manager: SuggestionManager, logger: Logger = None, on_escape_callback: Callable = None):
         """
         Initialize the suggestion window.
 
         Args:
             suggestion_manager: Manager for text suggestions
             logger: Logger instance for logging
+            on_escape_callback: Callback function to call when window is closed by Escape key
         """
         self.suggestion_manager = suggestion_manager
         self.logger = logger
@@ -39,6 +40,7 @@ class SuggestionWindow:
         self.last_active_window = None
         self.hotkey_handler = None
         self.ocr_in_progress = False  # Flag to track OCR processing status
+        self.on_escape_callback = on_escape_callback  # Callback for Escape key
         
     def set_ocr_in_progress(self, in_progress: bool = True):
         """
@@ -278,6 +280,12 @@ class SuggestionWindow:
         # Set flag to indicate window should be hidden
         self.is_visible = False
         
+        # Call the escape callback if provided
+        # Note: We don't call this in _hide_window because it might be called multiple times
+        if self.on_escape_callback and event is not None:  # Only call if explicitly hidden (not from _on_escape)
+            self.logger.info("Window hidden, calling escape callback")
+            self.on_escape_callback()
+        
         # Schedule the actual hiding to happen in the main thread
         if hasattr(self.window, 'after'):
             self.window.after(0, self._hide_window)
@@ -296,15 +304,7 @@ class SuggestionWindow:
                 self.window.destroy()
                 self.window = None
                 
-                # Restore focus to the previous window
-                if last_active:
-                    try:
-                        # Small delay to ensure window is fully destroyed
-                        time.sleep(0.1)
-                        win32gui.SetForegroundWindow(last_active)
-                    except Exception as e:
-                        if self.logger:
-                            self.logger.error(f"Error restoring focus: {e}")
+                # Don't try to restore focus - let the OS handle it
                 
                 if self.logger:
                     self.logger.info("Suggestion window destroyed")
@@ -315,7 +315,7 @@ class SuggestionWindow:
     def toggle(self):
         """Toggle the suggestion window visibility."""
         if self.is_visible:
-            self.hide()
+            self.hide(None)  # Pass None to prevent hide from calling the callback again
         else:
             # Load data files first
             self.suggestion_manager.load_data_files()
@@ -388,7 +388,7 @@ class SuggestionWindow:
     def exit_application(self):
         """Exit the application cleanly."""
         # Hide the window first
-        self.hide()
+        self.hide(None)  # Pass None to prevent hide from calling the callback again
         
         # Schedule application exit after a short delay
         if hasattr(self, 'root') and self.root:
@@ -448,17 +448,15 @@ class SuggestionWindow:
             selected_text = self.input_var.get()
             
         if selected_text:
+            # Call the escape callback if provided
+            if self.on_escape_callback:
+                self.logger.info("Suggestion selected, calling escape callback")
+                self.on_escape_callback()
+                
             # Hide window
-            self.hide()
+            self.hide(None)  # Pass None to prevent hide from calling the callback again
             
-            # Restore focus to the previous window
-            if self.last_active_window:
-                try:
-                    win32gui.SetForegroundWindow(self.last_active_window)
-                    time.sleep(0.1)  # Small delay to ensure window is active
-                except Exception as e:
-                    if self.logger:
-                        self.logger.error(f"Error restoring focus: {e}")
+            # Don't try to restore focus - let the OS handle it
             
             # Insert text
             self.suggestion_manager.insert_text(selected_text)
@@ -467,7 +465,11 @@ class SuggestionWindow:
 
     def _on_escape(self, event=None):
         """Handle Escape key press."""
-        self.hide()
+        # Call the escape callback if provided
+        if self.on_escape_callback:
+            self.logger.info("Calling escape callback")
+            self.on_escape_callback()
+        self.hide(None)  # Pass None to prevent hide from calling the callback again
 
     def _on_down(self, event=None):
         """Handle Down key press."""
@@ -518,7 +520,11 @@ class SuggestionWindow:
     def _check_focus(self):
         """Check if focus is still within our window."""
         if self.window.focus_get() is None:
-            self.hide()
+            # Call the escape callback if provided
+            if self.on_escape_callback:
+                self.logger.info("Window lost focus, calling escape callback")
+                self.on_escape_callback()
+            self.hide(None)  # Pass None to prevent hide from calling the callback again
 
     def set_hotkey_handler(self, handler: Callable):
         """
