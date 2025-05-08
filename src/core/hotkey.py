@@ -51,7 +51,7 @@ class HotkeyManager:
         """Background thread that listens for hotkey presses."""
         # Register all hotkeys with the keyboard library
         for hotkey, callback in self.registered_hotkeys.items():
-            keyboard.add_hotkey(hotkey, callback)
+            keyboard.add_hotkey(hotkey, callback, suppress=True)
             
         # Keep the thread alive while running
         while self.running:
