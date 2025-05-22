@@ -10,7 +10,7 @@ from src.utils.config import Config
 from src.utils.logger import Logger
 from src.core.screenshot import ScreenshotCapture
 from src.core.ocr import OCRProcessor
-from src.core.hotkey import HotkeyHandler
+from winhotkeys import HotkeyHandler
 from src.core.suggestion_manager import SuggestionManager
 from src.core.suggestion_window import SuggestionWindow
 from src.core.selection_window import SelectionWindow

@@ -1,5 +1,4 @@
 altgraph==0.17.4
-global_hotkeys==0.1.7
 keyboard==0.13.5
 packaging==24.2
 pefile==2023.2.7
@@ -11,3 +10,4 @@ pytesseract==0.3.13
 pywin32==308
 pywin32-ctypes==0.2.3
 six==1.17.0
+winhotkeys @ git+https://github.com/BenjaminKobjolke/winhotkeys.git@b6cbe3d231381076b371a9cedd48f610e2e473f5
