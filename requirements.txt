@@ -10,4 +10,4 @@ pytesseract==0.3.13
 pywin32==308
 pywin32-ctypes==0.2.3
 six==1.17.0
-winhotkeys @ git+https://github.com/BenjaminKobjolke/winhotkeys.git@b6cbe3d231381076b371a9cedd48f610e2e473f5
+winhotkeys @ git+https://github.com/BenjaminKobjolke/winhotkeys.git@053b0b20bd5d747a4b795d0d392a4a48161fcada
