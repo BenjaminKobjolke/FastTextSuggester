@@ -71,12 +71,14 @@ class ScreenshotOCRTool:
         # Initialize hotkey handlers
         self.hotkey_handler = HotkeyHandler(
             self.hotkey_combinations["capture"], 
-            self.handle_capture_hotkey
+            self.handle_capture_hotkey,
+            suppress=True  # Suppress the hotkey so it doesn't trigger in other applications
         )
         
         self.suggestion_hotkey_handler = HotkeyHandler(
             self.hotkey_combinations["suggestion_only"], 
-            self.handle_suggestion_hotkey
+            self.handle_suggestion_hotkey,
+            suppress=True  # Suppress the hotkey so it doesn't trigger in other applications
         )
         
         self.logger.info(f"Screenshot OCR Tool initialized with hotkeys: capture={self.hotkey_combinations['capture']}, suggestion_only={self.hotkey_combinations['suggestion_only']}")

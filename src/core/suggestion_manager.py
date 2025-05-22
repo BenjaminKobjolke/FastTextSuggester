@@ -4,7 +4,7 @@ Suggestion manager for the Screenshot OCR Tool
 import os
 import re
 from typing import List, Optional, Dict, Set
-import keyboard
+from pynput.keyboard import Controller
 import time
 
 
@@ -424,5 +424,6 @@ class SuggestionManager:
         # Add a longer delay before inserting text to ensure focus is properly restored
         time.sleep(.1)  # Increased delay to ensure focus is stable
             
-        # Use keyboard library to type the text
-        keyboard.write(text)
+        # Use pynput to type the text
+        keyboard = Controller()
+        keyboard.type(text)
