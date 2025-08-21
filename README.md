@@ -119,6 +119,7 @@ The `data_example` folder contains example files that demonstrate how the sugges
 - `example_words.txt`: Contains text that will be processed for individual word and phrase suggestions
 - `example_data.tsv`: Contains tab-separated values that will be suggested individually
 - `example_contacts.csv`: Contains comma-separated values that will be suggested individually
+- `templates_separator.txt`: Contains multi-line text blocks separated by `||` - only the first line is shown in suggestions, but the entire block is inserted
 
 To try these examples:
 
@@ -138,6 +139,7 @@ To try these examples:
 3. Start typing a word like "please" or "meeting" to see line-based suggestions from example_line.txt
 4. Try typing words like "programming" or "software" to see word-based suggestions from example_words.txt
 5. Try typing names or email addresses to see suggestions from the example_data.tsv and example_contacts.csv files
+6. Try typing "email", "meeting", "support", or "project" to see multi-line template suggestions from templates_separator.txt
 
 ## File Type Support
 
@@ -145,8 +147,9 @@ The application supports different types of files in the data directory:
 
 1. **Regular text files (.txt)**: Processed for individual words and phrases
 2. **Line-based text files (\_line.txt)**: Each line is suggested as a complete unit
-3. **TSV files (.tsv)**: Each value in the tab-separated file is suggested individually
-4. **CSV files (.csv)**: Each value in the comma-separated file is suggested individually
+3. **Separator-based text files (\_separator.txt)**: Multi-line text blocks separated by `||` - shows only the first line in suggestions but inserts the entire block
+4. **TSV files (.tsv)**: Each value in the tab-separated file is suggested individually
+5. **CSV files (.csv)**: Each value in the comma-separated file is suggested individually
 
 This allows you to organize your suggestions in the most appropriate format for your needs.
 

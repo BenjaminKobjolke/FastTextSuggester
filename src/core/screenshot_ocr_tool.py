@@ -81,7 +81,7 @@ class ScreenshotOCRTool:
             suppress=True  # Suppress the hotkey so it doesn't trigger in other applications
         )
         
-        self.logger.info(f"Screenshot OCR Tool initialized with hotkeys: capture={self.hotkey_combinations['capture']}, suggestion_only={self.hotkey_combinations['suggestion_only']}")
+        self.logger.info(f"FastTextSuggester initialized with hotkeys: capture={self.hotkey_combinations['capture']}, suggestion_only={self.hotkey_combinations['suggestion_only']}")
 
     def handle_capture_hotkey(self) -> None:
         """

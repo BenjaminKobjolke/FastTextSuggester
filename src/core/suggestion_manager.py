@@ -27,6 +27,7 @@ class SuggestionManager:
         self.words = []
         self.phrases = []
         self.lines = []  # Store complete lines from _line.txt files
+        self.blocks = {}  # Store multi-line blocks from _separator.txt files (first_line -> full_block)
         self.last_file = None
         
         # Load data files at initialization
@@ -180,6 +181,12 @@ class SuggestionManager:
                 print(f"Data directory {self.data_directory} does not exist")
                 return False
 
+            # Clear existing data collections to avoid duplicates when reloading
+            self.words = []
+            self.phrases = []
+            self.lines = []
+            self.blocks = {}
+
             # Get all text, TSV, and CSV files in the data directory
             files = [
                 os.path.join(self.data_directory, f) 
@@ -199,6 +206,9 @@ class SuggestionManager:
                 elif file_path.endswith('.csv'):
                     # For CSV files, extract all values
                     self._parse_csv_file(file_path)
+                elif file_path.endswith('_separator.txt'):
+                    # For _separator.txt files, store multi-line blocks
+                    self._parse_separator_file(file_path)
                 elif file_path.endswith('_line.txt'):
                     # For _line.txt files, store complete lines
                     self._parse_line_file(file_path)
@@ -304,6 +314,51 @@ class SuggestionManager:
             print(f"Error parsing CSV file {file_path}: {e}")
             return False
     
+    def _parse_separator_file(self, file_path: str) -> bool:
+        """
+        Parse a _separator.txt file to extract multi-line blocks separated by ||.
+        
+        Args:
+            file_path: Path to the separator text file
+            
+        Returns:
+            True if file was parsed successfully, False otherwise
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Split content by || separator
+            blocks = content.split('||')
+            
+            # Process each block
+            for block in blocks:
+                # Strip whitespace and skip empty blocks
+                block = block.strip()
+                if not block:
+                    continue
+                
+                # Get the first line as the key for display
+                lines = block.split('\n')
+                first_line = lines[0].strip() if lines else ''
+                
+                if first_line:
+                    # Store the full block with first line as key
+                    # If there are duplicate first lines, append a counter
+                    key = first_line
+                    counter = 1
+                    while key in self.blocks:
+                        counter += 1
+                        key = f"{first_line} ({counter})"
+                    
+                    self.blocks[key] = block
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error parsing separator file {file_path}: {e}")
+            return False
+    
     def _parse_data_file(self, file_path: str) -> bool:
         """
         Parse a regular data text file to extract words and phrases.
@@ -367,7 +422,14 @@ class SuggestionManager:
             
         partial_text = partial_text.lower()
         
-        # First, look for line matches (highest priority)
+        # First, look for block matches (highest priority)
+        # Search within the entire block content, but only return the first line (key)
+        block_matches = []
+        for key, block in self.blocks.items():
+            if partial_text in block.lower():
+                block_matches.append(key)
+        
+        # Then, look for line matches (second highest priority)
         line_matches = [
             line for line in self.lines 
             if partial_text in line.lower()
@@ -400,8 +462,8 @@ class SuggestionManager:
         ]
         
         # Combine results with priority order: 
-        # lines first, then email matches, then prefix matches, then substring matches
-        all_matches = line_matches + email_matches + prefix_word_matches + prefix_phrase_matches + substring_word_matches + substring_phrase_matches
+        # blocks first, then lines, then email matches, then prefix matches, then substring matches
+        all_matches = block_matches + line_matches + email_matches + prefix_word_matches + prefix_phrase_matches + substring_word_matches + substring_phrase_matches
         
         # Remove duplicates while preserving order
         unique_matches = []
@@ -420,10 +482,17 @@ class SuggestionManager:
         """
         if not text:
             return
+        
+        # Check if the text is a key in our blocks dictionary
+        # If so, insert the full block instead of just the first line
+        if text in self.blocks:
+            text_to_insert = self.blocks[text]
+        else:
+            text_to_insert = text
             
         # Add a longer delay before inserting text to ensure focus is properly restored
         time.sleep(.1)  # Increased delay to ensure focus is stable
             
         # Use pynput to type the text
         keyboard = Controller()
-        keyboard.type(text)
+        keyboard.type(text_to_insert)

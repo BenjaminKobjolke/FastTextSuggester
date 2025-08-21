@@ -1,0 +1,119 @@
+Email Signature - Professional
+Best regards,
+John Smith
+Senior Software Developer
+Tech Solutions Inc.
+Phone: +1 (555) 123-4567
+Email: john.smith@techsolutions.com
+LinkedIn: linkedin.com/in/johnsmith||
+Email Signature - Casual
+Cheers,
+John
+--
+Sent from my mobile device||
+Meeting Invitation - Team Standup
+Subject: Daily Team Standup
+Hi team,
+
+Please join our daily standup meeting:
+- Time: 9:00 AM - 9:15 AM
+- Location: Conference Room B / Zoom Link: [link]
+- Agenda: Quick updates on progress, blockers, and today's goals
+
+Looking forward to seeing everyone there!||
+Meeting Invitation - Client Review
+Subject: Project Review Meeting
+Dear [Client Name],
+
+I would like to schedule a project review meeting to discuss:
+- Current project status
+- Completed milestones
+- Upcoming deliverables
+- Any concerns or feedback
+
+Please let me know your availability for next week.
+Best regards,
+[Your Name]||
+Support Response - Issue Acknowledged
+Thank you for contacting support.
+
+We have received your request (Ticket #[NUMBER]) and our team is currently investigating the issue.
+Expected response time: Within 24 hours
+Priority: Normal
+
+We will update you as soon as we have more information.
+Best regards,
+Support Team||
+Support Response - Solution Provided
+Hello [Customer Name],
+
+Thank you for your patience. We have identified the issue and here's the solution:
+
+1. First, please try clearing your browser cache
+2. Then, log out and log back into your account
+3. If the issue persists, please try using a different browser
+
+This should resolve the problem. If you continue to experience issues, please let us know.
+
+Best regards,
+Technical Support Team||
+Project Status - On Track
+Project Status Update
+
+Project: [Project Name]
+Status: On Track ✓
+Completion: 65%
+
+Completed this week:
+• Implemented user authentication
+• Database schema finalized
+• UI mockups approved
+
+Next week's goals:
+• Begin API integration
+• Complete unit tests for core modules
+• Client review meeting
+
+No blockers at this time.||
+Project Status - Delayed
+Project Status Update
+
+Project: [Project Name]
+Status: Delayed ⚠
+Completion: 45%
+New estimated completion: [Date]
+
+Reason for delay:
+• Unexpected technical challenges with third-party integration
+• Additional requirements from stakeholder feedback
+
+Mitigation plan:
+• Allocated additional resources
+• Prioritized critical features
+• Daily progress check-ins
+
+Please let me know if you'd like to discuss this further.||
+Out of Office - Vacation
+Subject: Out of Office Auto-Reply
+
+Hello,
+
+Thank you for your email. I am currently out of the office on vacation from [START DATE] to [END DATE] with limited access to email.
+
+For urgent matters, please contact [COLLEAGUE NAME] at [EMAIL].
+For general inquiries, I will respond to your email upon my return.
+
+Best regards,
+[Your Name]||
+Out of Office - Business Trip
+Subject: Out of Office - Business Trip
+
+Hi,
+
+I'm currently traveling for business and may have delayed response times.
+I will be checking emails periodically and will respond as soon as possible.
+
+For immediate assistance, please contact my colleague [NAME] at [EMAIL].
+
+Thank you for your understanding.
+[Your Name]
