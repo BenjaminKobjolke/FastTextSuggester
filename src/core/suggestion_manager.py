@@ -28,6 +28,7 @@ class SuggestionManager:
         self.phrases = []
         self.lines = []  # Store complete lines from _line.txt files
         self.blocks = {}  # Store multi-line blocks from _separator.txt files (first_line -> full_block)
+        self.replacements = {}  # Store key-value replacements from _replace.txt files
         self.last_file = None
         
         # Load data files at initialization
@@ -186,6 +187,7 @@ class SuggestionManager:
             self.phrases = []
             self.lines = []
             self.blocks = {}
+            self.replacements = {}
 
             # Get all text, TSV, and CSV files in the data directory
             files = [
@@ -209,6 +211,9 @@ class SuggestionManager:
                 elif file_path.endswith('_separator.txt'):
                     # For _separator.txt files, store multi-line blocks
                     self._parse_separator_file(file_path)
+                elif file_path.endswith('_replace.txt'):
+                    # For _replace.txt files, store key-value replacements
+                    self._parse_replace_file(file_path)
                 elif file_path.endswith('_line.txt'):
                     # For _line.txt files, store complete lines
                     self._parse_line_file(file_path)
@@ -358,7 +363,45 @@ class SuggestionManager:
         except Exception as e:
             print(f"Error parsing separator file {file_path}: {e}")
             return False
-    
+
+    def _parse_replace_file(self, file_path: str) -> bool:
+        """
+        Parse a _replace.txt file to extract key-value replacement mappings.
+        Format: key|replacement (one per line)
+        Use || to represent a literal | character in the replacement.
+
+        Args:
+            file_path: Path to the replace text file
+
+        Returns:
+            True if file was parsed successfully, False otherwise
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    # Split by first | to separate key from replacement
+                    parts = line.split('|', 1)
+                    if len(parts) == 2:
+                        key = parts[0].strip()
+                        # Unescape || to | in the replacement value only
+                        replacement = parts[1].replace('||', '|').strip()
+
+                        if key:
+                            self.replacements[key] = replacement
+                            # Add key to words for suggestion visibility
+                            if key not in self.words:
+                                self.words.append(key)
+
+            return True
+
+        except Exception as e:
+            print(f"Error parsing replace file {file_path}: {e}")
+            return False
+
     def _parse_data_file(self, file_path: str) -> bool:
         """
         Parse a regular data text file to extract words and phrases.
@@ -483,9 +526,11 @@ class SuggestionManager:
         if not text:
             return
         
-        # Check if the text is a key in our blocks dictionary
-        # If so, insert the full block instead of just the first line
-        if text in self.blocks:
+        # Check if the text is a key in our replacements dictionary (highest priority)
+        # Then check blocks dictionary
+        if text in self.replacements:
+            text_to_insert = self.replacements[text]
+        elif text in self.blocks:
             text_to_insert = self.blocks[text]
         else:
             text_to_insert = text

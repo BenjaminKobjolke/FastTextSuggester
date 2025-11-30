@@ -10,6 +10,7 @@ A simple tool that captures screenshots when a hotkey is pressed, processes the 
 - Auto-suggest words from OCR results in a minimalistic input window
 - Load text files from the data directory for additional suggestions
 - Support for line-based suggestions from files ending with \_line.txt
+- Support for replacement mappings from files ending with \_replace.txt (e.g., type "umlautu" to insert "ü")
 - Support for TSV (tab-separated values) and CSV (comma-separated values) files with individual value suggestions
 - Insert selected text into the active application with a single keypress
 - Configurable settings via settings.ini
@@ -120,6 +121,7 @@ The `data_example` folder contains example files that demonstrate how the sugges
 - `example_data.tsv`: Contains tab-separated values that will be suggested individually
 - `example_contacts.csv`: Contains comma-separated values that will be suggested individually
 - `templates_separator.txt`: Contains multi-line text blocks separated by `||` - only the first line is shown in suggestions, but the entire block is inserted
+- `shortcuts_replace.txt`: Contains key-value replacement mappings (e.g., "umlautu" → "ü", "pipe" → "|")
 
 To try these examples:
 
@@ -140,6 +142,7 @@ To try these examples:
 4. Try typing words like "programming" or "software" to see word-based suggestions from example_words.txt
 5. Try typing names or email addresses to see suggestions from the example_data.tsv and example_contacts.csv files
 6. Try typing "email", "meeting", "support", or "project" to see multi-line template suggestions from templates_separator.txt
+7. Try typing "umlaut" or "pipe" to see replacement suggestions from shortcuts_replace.txt
 
 ## File Type Support
 
@@ -148,8 +151,9 @@ The application supports different types of files in the data directory:
 1. **Regular text files (.txt)**: Processed for individual words and phrases
 2. **Line-based text files (\_line.txt)**: Each line is suggested as a complete unit
 3. **Separator-based text files (\_separator.txt)**: Multi-line text blocks separated by `||` - shows only the first line in suggestions but inserts the entire block
-4. **TSV files (.tsv)**: Each value in the tab-separated file is suggested individually
-5. **CSV files (.csv)**: Each value in the comma-separated file is suggested individually
+4. **Replacement text files (\_replace.txt)**: Key-value mappings in format `key|replacement` - type the key and the replacement is inserted. Use `||` for a literal `|` character (e.g., `pipe|||` maps "pipe" to "|")
+5. **TSV files (.tsv)**: Each value in the tab-separated file is suggested individually
+6. **CSV files (.csv)**: Each value in the comma-separated file is suggested individually
 
 This allows you to organize your suggestions in the most appropriate format for your needs.
 

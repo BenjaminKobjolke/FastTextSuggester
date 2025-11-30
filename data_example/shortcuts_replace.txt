@@ -1,0 +1,12 @@
+pipe|||
+umlautu|ü
+umlauto|ö
+umlauta|ä
+umlautU|Ü
+umlautO|Ö
+umlautA|Ä
+szlig|ß
+rightarrow|→
+leftarrow|←
+uparrow|↑
+downarrow|↓
