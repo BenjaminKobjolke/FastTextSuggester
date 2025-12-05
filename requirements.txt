@@ -3,8 +3,8 @@ keyboard==0.13.5
 packaging==24.2
 pefile==2023.2.7
 pillow==11.1.0
-pyinstaller==6.13.0
-pyinstaller-hooks-contrib==2025.3
+pyinstaller==6.17.0
+pyinstaller-hooks-contrib==2025.10
 pynput==1.8.1
 pytesseract==0.3.13
 pywin32==308
