@@ -49,7 +49,8 @@ class OCRProcessor:
         
         # Perform OCR with optimized configuration
         # Use both German and English languages, and LSTM OCR Engine only (faster)
-        config = f"-l deu+eng --psm 6 --oem 1"
+        language = self.settings.get("language", "eng")
+        config = f"-l {language} --psm 6 --oem 1"
         text = pytesseract.image_to_string(image, config=config)
         
         return text

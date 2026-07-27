@@ -62,6 +62,11 @@ def parse_arguments():
         action="store_true",
         help="Interactively register new hotkey combinations"
     )
+    parser.add_argument(
+        "--palette",
+        action="store_true",
+        help="Run under FastCommandCenter without local hotkeys or Tk workflow",
+    )
     return parser.parse_args()
 
 def capture_hotkey_combination(prompt: str) -> Optional[str]:
@@ -223,5 +228,10 @@ if __name__ == "__main__":
             
     else:
         # Create and start the Screenshot OCR Tool
-        tool = ScreenshotOCRTool()
+        palette = None
+        if args.palette:
+            from fasttool_palette import FastToolPalette
+
+            palette = FastToolPalette("fasttextsuggester")
+        tool = ScreenshotOCRTool(palette=palette)
         tool.start()

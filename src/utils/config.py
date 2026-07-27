@@ -28,6 +28,17 @@ class Config:
         
         self.config.read(config_path)
 
+    def reload(self) -> None:
+        self.config.read(self.config_path)
+
+    def set_value(self, section: str, key: str, value: object) -> None:
+        if section not in self.config:
+            self.config[section] = {}
+        self.config[section][key] = str(value)
+        with open(self.config_path, "w", encoding="utf-8") as config_file:
+            self.config.write(config_file)
+        self.reload()
+
     def _create_default_config(self) -> None:
         """Create a default configuration file if none exists."""
         self.config["Hotkey"] = {

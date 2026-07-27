@@ -528,15 +528,23 @@ class SuggestionManager:
         
         # Check if the text is a key in our replacements dictionary (highest priority)
         # Then check blocks dictionary
-        if text in self.replacements:
-            text_to_insert = self.replacements[text]
-        elif text in self.blocks:
-            text_to_insert = self.blocks[text]
-        else:
-            text_to_insert = text
+        text_to_insert = self.resolve_text(text)
             
         # Add a longer delay before inserting text to ensure focus is properly restored
         time.sleep(.1)  # Increased delay to ensure focus is stable
 
         # Use keyboard library to type the text (more reliable in frozen executables)
         keyboard.write(text_to_insert)
+
+    def resolve_text(self, suggestion: str) -> str:
+        """Return the insertion value represented by a displayed suggestion."""
+        if suggestion in self.replacements:
+            return self.replacements[suggestion]
+        if suggestion in self.blocks:
+            return self.blocks[suggestion]
+        return suggestion
+
+    def initial_suggestions(self, max_results: int = 10) -> List[str]:
+        """Return the same initial rows the standalone window displays."""
+        source = self.lines if self.lines else self.words
+        return source[:max_results]

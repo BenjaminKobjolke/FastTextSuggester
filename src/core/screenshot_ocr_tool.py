@@ -15,6 +15,7 @@ from src.core.suggestion_manager import SuggestionManager
 from src.core.suggestion_window import SuggestionWindow
 from src.core.selection_window import SelectionWindow
 from src.core.tool_state import ToolState
+from src.core.palette_integration import PaletteIntegration
 
 
 class ScreenshotOCRTool:
@@ -25,7 +26,7 @@ class ScreenshotOCRTool:
     # Class variable to track the current selection window
     _selection_window = None
 
-    def __init__(self):
+    def __init__(self, palette=None):
         """Initialize the Screenshot OCR Tool."""
         # Initialize configuration
         self.config = Config()
@@ -52,34 +53,39 @@ class ScreenshotOCRTool:
         self.suggestion_settings = self.config.get_suggestion_settings()
         
         # Initialize suggestion components if enabled
-        if self.suggestion_settings["enabled"]:
+        if self.suggestion_settings["enabled"] or palette is not None:
             self.suggestion_manager = SuggestionManager(
                 output_directory=self.config.get_output_directory(),
                 data_directory=self.config.get_data_directory()
             )
             # Create suggestion window with escape callback
-            self.suggestion_window = SuggestionWindow(
-                self.suggestion_manager, 
-                self.logger,
-                on_escape_callback=self._on_suggestion_window_escape
-            )
+            self.suggestion_window = None
+            if palette is None:
+                self.suggestion_window = SuggestionWindow(
+                    self.suggestion_manager,
+                    self.logger,
+                    on_escape_callback=self._on_suggestion_window_escape,
+                )
             self.suggestion_window_thread = None
         else:
             self.suggestion_manager = None
             self.suggestion_window = None
         
         # Initialize hotkey handlers
-        self.hotkey_handler = HotkeyHandler(
-            self.hotkey_combinations["capture"], 
-            self.handle_capture_hotkey,
-            suppress=True  # Suppress the hotkey so it doesn't trigger in other applications
-        )
-        
-        self.suggestion_hotkey_handler = HotkeyHandler(
-            self.hotkey_combinations["suggestion_only"], 
-            self.handle_suggestion_hotkey,
-            suppress=True  # Suppress the hotkey so it doesn't trigger in other applications
-        )
+        self.hotkey_handler = None
+        self.suggestion_hotkey_handler = None
+        self.palette_integration = None
+        if palette is None:
+            self.hotkey_handler = HotkeyHandler(
+                self.hotkey_combinations["capture"], self.handle_capture_hotkey, suppress=True
+            )
+            self.suggestion_hotkey_handler = HotkeyHandler(
+                self.hotkey_combinations["suggestion_only"],
+                self.handle_suggestion_hotkey,
+                suppress=True,
+            )
+        else:
+            self.palette_integration = PaletteIntegration(self, palette)
         
         self.logger.info(f"FastTextSuggester initialized with hotkeys: capture={self.hotkey_combinations['capture']}, suggestion_only={self.hotkey_combinations['suggestion_only']}")
 
@@ -264,6 +270,8 @@ class ScreenshotOCRTool:
             
             # Clean up temporary screenshot
             self.screenshot_capture.cleanup_temp_files(screenshot_path)
+            if self.palette_integration is not None:
+                self.palette_integration.activate_suggestions()
             
         except Exception as e:
             # Clear OCR in progress status on error
@@ -345,8 +353,10 @@ class ScreenshotOCRTool:
                     self.suggestion_window.show()
             
             # Start the hotkey handlers
-            self.hotkey_handler.start()
-            self.suggestion_hotkey_handler.start()
+            if self.hotkey_handler is not None:
+                self.hotkey_handler.start()
+            if self.suggestion_hotkey_handler is not None:
+                self.suggestion_hotkey_handler.start()
             
             # Keep the main thread alive
             print(f"Screenshot OCR Tool is running.")
@@ -359,6 +369,8 @@ class ScreenshotOCRTool:
             # Wait for keyboard interrupt
             try:
                 while True:
+                    if self.palette_integration is not None:
+                        self.palette_integration.poll()
                     # Process Tkinter events if window exists
                     if self.suggestion_settings["enabled"] and self.suggestion_window:
                         if hasattr(self.suggestion_window, 'root') and self.suggestion_window.root:
@@ -396,11 +408,24 @@ class ScreenshotOCRTool:
         self.logger.info("Stopping Screenshot OCR Tool...")
         
         # Stop hotkey handlers
-        self.hotkey_handler.stop()
-        self.suggestion_hotkey_handler.stop()
+        if self.hotkey_handler is not None:
+            self.hotkey_handler.stop()
+        if self.suggestion_hotkey_handler is not None:
+            self.suggestion_hotkey_handler.stop()
         
         # Hide suggestion window if visible
         if self.suggestion_settings["enabled"] and self.suggestion_window and self.suggestion_window.is_visible:
             self.suggestion_window.hide()
             
         self.logger.info("Screenshot OCR Tool stopped")
+
+    def apply_config_setting(self, section: str, key: str, value: object) -> None:
+        self.config.set_value(section, key, value)
+        self.logger = Logger(self.config)
+        self.hotkey_combinations = self.config.get_hotkey_combinations()
+        self.suggestion_settings = self.config.get_suggestion_settings()
+        self.ocr_processor.settings = self.config.get_ocr_settings()
+        self.screenshot_capture.output_dir = self.config.get_output_directory()
+        if self.suggestion_manager is not None:
+            self.suggestion_manager.output_directory = self.config.get_output_directory()
+            self.suggestion_manager.data_directory = self.config.get_data_directory()

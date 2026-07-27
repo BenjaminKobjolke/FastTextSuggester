@@ -1,0 +1,16 @@
+{
+  "id": "fasttextsuggester",
+  "name": "FastTextSuggester",
+  "ipc_title": "FastToolIPC::fasttextsuggester",
+  "launch": {
+    "exe": "dist/FastTextSuggester.exe",
+    "args": ["--palette"]
+  },
+  "actions": [
+    {"id": "capture_full_screen", "label": "Capture full screen"},
+    {"id": "capture_active_window", "label": "Capture active window"}
+  ],
+  "text_providers": [
+    {"id": "suggestions", "label": "FastTextSuggester", "min_chars": 0}
+  ]
+}

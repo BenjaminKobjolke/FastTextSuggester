@@ -15,9 +15,25 @@ A simple tool that captures screenshots when a hotkey is pressed, processes the 
 - Insert selected text into the active application with a single keypress
 - Configurable settings via settings.ini
 
+## FastCommandCenter mode
+
+Add this repository folder through FCC's `Tools: manage folders`. The included
+`fasttool.json` exposes `FastTextSuggester`, full-screen capture, and
+active-window capture. In this mode the executable is launched with
+`--palette`, registers no local global hotkeys, and creates no Tk workflow.
+
+Typing in the FCC suggestion level queries this process over bridge protocol
+v3. Replacement keys and multiline block labels return their resolved text;
+FCC closes, copies that value to the clipboard, restores the prior application,
+and pastes it. After OCR, the tool asks FCC to reopen this suggestion level.
+All `settings.ini` values remain tool-owned but are editable through the FCC
+external settings command.
+
+Standalone launches without `--palette` retain the existing hotkeys and Tk UI.
+
 ## Requirements
 
-- Python 3.6+
+- Python 3.11 or 3.12
 - Tesseract OCR engine installed on your system
 - Required Python packages (see requirements.txt)
 
