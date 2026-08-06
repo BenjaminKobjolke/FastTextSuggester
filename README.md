@@ -29,6 +29,13 @@ and pastes it. After OCR, the tool asks FCC to reopen this suggestion level.
 All `settings.ini` values remain tool-owned but are editable through the FCC
 external settings command.
 
+With an empty search box, the suggestion level leads with recently picked
+entries (most recent first), then fills the rest with the default initial
+list. FCC echoes each selection back to this tool (`on_selected`), which
+records it to `recent.json` in the output directory so recents survive a
+restart. This applies to any suggestion type — words, lines, blocks, and
+replacement keys.
+
 Standalone launches without `--palette` retain the existing hotkeys and Tk UI.
 
 ## Requirements

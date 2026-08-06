@@ -15,7 +15,7 @@ class PaletteIntegration:
         self._tool = tool
         self._palette = palette
         self._loaded_session = ""
-        palette.add_text_provider("suggestions", self._query)
+        palette.add_text_provider("suggestions", self._query, self._on_selected)
         self._register_settings()
 
     def poll(self) -> None:
@@ -43,6 +43,11 @@ class PaletteIntegration:
             else manager.initial_suggestions(maximum)
         )
         return [TextSuggestion(title=label, text=manager.resolve_text(label)) for label in labels]
+
+    def _on_selected(self, suggestion: TextSuggestion) -> None:
+        manager = self._tool.suggestion_manager
+        if manager is not None:
+            manager.record_selection(suggestion.title, suggestion.text)
 
     def _register_settings(self) -> None:
         config = self._tool.config

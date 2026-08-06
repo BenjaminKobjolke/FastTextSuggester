@@ -1,11 +1,14 @@
 """
 Suggestion manager for the Screenshot OCR Tool
 """
+import json
 import os
 import re
 from typing import List, Optional, Dict, Set
 import keyboard
 import time
+
+RECENT_MAX = 50
 
 
 class SuggestionManager:
@@ -30,7 +33,10 @@ class SuggestionManager:
         self.blocks = {}  # Store multi-line blocks from _separator.txt files (first_line -> full_block)
         self.replacements = {}  # Store key-value replacements from _replace.txt files
         self.last_file = None
-        
+        self.recent_file = os.path.join(self.output_directory, "recent.json")
+        self.recent: List[Dict[str, str]] = []
+        self._load_recent()
+
         # Load data files at initialization
         self.load_data_files()
 
@@ -545,6 +551,48 @@ class SuggestionManager:
         return suggestion
 
     def initial_suggestions(self, max_results: int = 10) -> List[str]:
-        """Return the same initial rows the standalone window displays."""
+        """Return recently used entries first, filled out with the default initial rows."""
         source = self.lines if self.lines else self.words
-        return source[:max_results]
+        valid_titles = (
+            set(self.lines) | set(self.words) | set(self.blocks) | set(self.replacements)
+        )
+        result = [title for title in self.recent_labels(max_results) if title in valid_titles]
+        for item in source:
+            if len(result) >= max_results:
+                break
+            if item not in result:
+                result.append(item)
+        return result[:max_results]
+
+    def recent_labels(self, max_results: int = 10) -> List[str]:
+        """Return recently selected titles, most recent first."""
+        return [entry["title"] for entry in self.recent[:max_results]]
+
+    def record_selection(self, title: str, text: str) -> None:
+        """Record a suggestion the user picked, most recent first, persisted to disk."""
+        if not title:
+            return
+        self.recent = [entry for entry in self.recent if entry["title"] != title]
+        self.recent.insert(0, {"title": title, "text": text})
+        self.recent = self.recent[:RECENT_MAX]
+        self._save_recent()
+
+    def _load_recent(self) -> None:
+        try:
+            with open(self.recent_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                self.recent = [
+                    entry for entry in data
+                    if isinstance(entry, dict) and "title" in entry and "text" in entry
+                ]
+        except (OSError, json.JSONDecodeError):
+            self.recent = []
+
+    def _save_recent(self) -> None:
+        try:
+            os.makedirs(self.output_directory, exist_ok=True)
+            with open(self.recent_file, "w", encoding="utf-8") as f:
+                json.dump(self.recent, f, ensure_ascii=False, indent=2)
+        except OSError as e:
+            print(f"Error saving recent suggestions: {e}")
